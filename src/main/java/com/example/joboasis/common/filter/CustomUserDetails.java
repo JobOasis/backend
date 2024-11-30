@@ -1,4 +1,4 @@
-package com.example.joboasis.security.filter;
+package com.example.joboasis.common.filter;
 
 import com.example.joboasis.domain.member.entity.Member;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +35,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {  //메서드 이름 주의
-        return member.getLoginId();
+        return member.getEmail();
     }
 
     @Override

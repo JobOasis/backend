@@ -1,7 +1,6 @@
 package com.example.joboasis.domain.member.controller;
 
 import com.example.joboasis.domain.member.dto.MemberRequestDto;
-import com.example.joboasis.domain.member.dto.MemberResponseDto;
 import com.example.joboasis.domain.member.service.MailService;
 import com.example.joboasis.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +20,6 @@ public class MemberController {
         return memberService.checkEmail(email);
     }
 
-    @PostMapping("/signup/check-id")  //아이디 중복 확인
-    public boolean checkId(@RequestParam String loginId) {
-        return memberService.checkId(loginId);
-    }
-
     @PostMapping("/signup/send-email-code")  //인증번호 받기 버튼 클릭 -> 인증번호 메일 전송
     public void sendEmailCode(@RequestParam String email) {
         mailService.sendMail(email);
@@ -38,9 +32,9 @@ public class MemberController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<MemberResponseDto> addMember(@RequestBody MemberRequestDto memberDto) {
-        MemberResponseDto newMemberDto = memberService.addMember(memberDto);
-        return new ResponseEntity<>(newMemberDto, HttpStatus.CREATED);
+    public ResponseEntity addMember(@RequestBody MemberRequestDto memberDto) {
+        Long memberId = memberService.addMember(memberDto);
+        return new ResponseEntity<>(memberId, HttpStatus.CREATED);
     }
 
     @GetMapping("/profile")  //MEMBER 용 Authorization 테스트
