@@ -1,7 +1,9 @@
-package com.example.joboasis.security.filter;
+package com.example.joboasis.common.filter;
 
 import com.example.joboasis.domain.member.entity.Member;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,60 +20,50 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 @RequiredArgsConstructor
-public class JWTFilter extends OncePerRequestFilter {
+public class JWTValidator extends OncePerRequestFilter {
 
-    private final JWTUtil jwtUtil;
+    private final JWTVerifier jwtVerifier;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
+        Claims payload;
 
-        String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);  //Header 로부터 access token 얻기
-
-        if (authorization == null || !authorization.startsWith("Bearer")) {
+        if (!isBearerTokenType(authorization)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String accessToken = authorization.split(" ")[1];  //Bearer 제거
+        String accessToken = getAccessToken(authorization);
 
-        try {  //access token 만료 확인
-            jwtUtil.isExpired(accessToken);
-        } catch (ExpiredJwtException e) {  //JWTUtil 에서 파싱 과정에서 발생하는 예외를 핸들링하면 여기서 if 분기로 처리 가능
+        try {
+            payload = jwtVerifier.verifyAccessToken(accessToken);
 
-            //response body
+        } catch (ExpiredJwtException e) {
             PrintWriter writer = response.getWriter();
-            writer.print("access token expired");
+            writer.print("Access Token Expired");
 
-            //response status code
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;  //프론트에서 /reissue 로 redirect
-        }
-
-        String tokenType = jwtUtil.getTokenType(accessToken);
-
-        if (!tokenType.equals("access")) {  //access token 이 맞는지 확인
-
-            //response body
+        } catch (JwtException e) {
             PrintWriter writer = response.getWriter();
-            writer.print("invalid access token");
+            writer.print(e);
 
-            //response status code
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
 
-        String loginId = jwtUtil.getLoginId(accessToken);
-        String authority = jwtUtil.getAuthority(accessToken);
+        String email = jwtVerifier.getEmail(payload);
+        String authority = jwtVerifier.getAuthority(payload);
 
-        Member member = new Member(loginId, authority);
+        Member member = new Member(email, authority);
 
-        //UserDetails 에 회원 정보 객체 담기
+        //UserDetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(member);
 
         //스프링 시큐리티 인증 토큰 생성
         Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(customUserDetails, null, customUserDetails.getAuthorities());
-
-        //세션에 사용자 등록
+        //쓰레드 로컬에 사용자 등록
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
@@ -79,8 +71,19 @@ public class JWTFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private static String getAccessToken(String authorization) {
+        return authorization.split(" ")[1];
+    }
+
+    private static boolean isBearerTokenType(String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer")) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {  //reissue 는 JWTFilter 를 거치지 않게 처리
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {  //reissue는 JWTFilter를 거치지 않게 처리
         return request.getRequestURI().equals("/reissue");
     }
 }
