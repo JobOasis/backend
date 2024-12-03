@@ -14,13 +14,11 @@ public class MemberRequestDto {
     private String email;
     private String password;
     private String name;
-    private String loginId;
     private String phoneNumber;
     private MemberJob job;
 
     public Member toEntity(String encodedPassword) {
         return Member.builder()
-                .loginId(loginId)
                 .name(name)
                 .email(email)
                 .password(encodedPassword)

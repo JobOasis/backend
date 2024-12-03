@@ -1,6 +1,5 @@
 package com.example.joboasis.domain.member.entity;
 
-import com.example.joboasis.domain.member.dto.MemberResponseDto;
 import com.example.joboasis.domain.member.enums.MemberJob;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,7 +17,6 @@ public class Member {
 	@Column(name = "member_id")
 	private Long id;
 	private String name;
-	private String loginId;
 	private String email;
 	private String password;
 	private String phoneNumber;
@@ -26,16 +24,15 @@ public class Member {
 	private MemberJob job;
 	private String authority;
 
-	public Member(String loginId, String authority) {
-		this.loginId = loginId;
-		this.password = "temppassword";
+	public Member(String email, String authority) {
+		this.email = email;
+		this.password = "password";  //Password for authentication in JWTValidator
 		this.authority = authority;
 	}
 
 	@Builder
-	public Member(String name, String loginId, String email, String password, String phoneNumber, MemberJob job) {
+	public Member(String name, String email, String password, String phoneNumber, MemberJob job) {
 		this.name = name;
-		this.loginId = loginId;
 		this.email = email;
 		this.password = password;
 		this.phoneNumber = phoneNumber;
@@ -43,14 +40,4 @@ public class Member {
 		this.authority = "ROLE_MEMBER";
 	}
 
-	public MemberResponseDto toResponseDto() {
-		return MemberResponseDto.builder()
-				.loginId(loginId)
-				.id(id)
-				.name(name)
-				.email(email)
-				.phoneNumber(phoneNumber)
-				.job(job)
-				.build();
-	}
 }

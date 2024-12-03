@@ -1,4 +1,4 @@
-package com.example.joboasis.security.token;
+package com.example.joboasis.common.token;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,21 +8,25 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {
 
+    private static final long REFRESH_EXP = 30L * 24 * 60 * 60 * 1000;  //30일
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String loginId;
+    private String email;
     private String token;
-    private String expireDate;
+    private Date expireDate;
 
-    public RefreshToken(String loginId, String token, String expireDate) {
-        this.loginId = loginId;
+    public RefreshToken(String email, String token) {
+        this.email = email;
         this.token = token;
-        this.expireDate = expireDate;
+        this.expireDate = new Date(System.currentTimeMillis() + REFRESH_EXP);
     }
 }

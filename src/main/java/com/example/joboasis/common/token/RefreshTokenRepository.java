@@ -1,4 +1,4 @@
-package com.example.joboasis.security.token;
+package com.example.joboasis.common.token;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
